@@ -1,0 +1,121 @@
+# Code largely from Professor Paszek.
+
+using DifferentialEquations
+using Plots
+
+timeExtend = fill(0,100,1)
+
+for i in 1:100
+  j = i -101
+  timeExtend[i,1] = j
+end
+
+# solves the system to get the inital ss variabls
+function partD!(du,u,p,t)
+  alphax = 3.9*10^-2
+  alphay = 4.3*10^-3
+  betax = 6.1
+  betay = 5.7
+  degy = 1.05
+  degz = 1.04
+  zx = 1.3*10^-5
+  yz = 11*10^-3
+  xz = 12*10^-2
+  xy = 7.9*10^-4
+  nzx = 2.32
+  nxy = 2
+  nxz = 2
+  nyz = 2
+  s = 105
+
+ du[1] =  (alphax+betax*s)/(1+s+(u[3]/zx)^nzx) - u[1]             #dx/dt
+ du[2] =  (alphay +betay*s)/(1+s+(u[1]/xy)^nxy) - degy*u[2]       #dy/dt
+ du[3] =  (1)/(1+(u[1]/xz)^nxz+(u[2]/yz)^nyz) - degz*u[3]        #dz/dt
+end
+
+u0 = [0.0;0.0;0.0]                      #intial conditions
+tspan = (0.0,200)                     #start and end time
+prob = ODEProblem(partD!,u0,tspan)     #Create an ODE problem for the PartD function
+sol = solve(prob)                       #Solve the system
+
+InitialStateArray = vcat([],timeExtend)
+InitialStateArray = hcat(InitialStateArray,sol[3,length(sol)-99:length(sol)])
+# print(InitialStateArray)
+
+
+#print("The inital values of X,Y,Z are:")
+#print(sol[length(sol)])
+
+gr(size=(500,500), show = true)  #use the gr backend for plotting
+#Function for part F
+#u[1] = x; u[2] = y; u[3] = z
+function partD!(du,u,p,t)
+  alphax = 3.9*10^-2
+  alphay = 4.3*10^-3
+  betax = 6.1
+  betay = 5.7
+  degy = 1.05
+  degz = 1.04
+  zx = 1.3*10^-5
+  yz = 11*10^-3
+  xz = 12*10^-2
+  xy = 7.9*10^-4
+  nzx = 2.32
+  nxy = 2
+  nxz = 2
+  nyz = 2
+  s = 100
+
+ du[1] =  (alphax+betax*s)/(1+s+(u[3]/zx)^nzx) - u[1]             #dx/dt
+ du[2] =  (alphay +betay*s)/(1+s+(u[1]/xy)^nxy) - degy*u[2]       #dy/dt
+ du[3] =  (1)/(1+(u[1]/xz)^nxz+(u[2]/yz)^nyz) - degz*u[3]        #dz/dt
+end
+# Cell initial state multiplier mcell1 = 1, mcell2 = 1.25, mcell3 = 0.75
+m = 1
+u0 = [m*0.13501787727825093;m*0.2700966045978477;m*0.0006671966699509089]                      #intial conditions
+tspan = (0.0,100)                     #start and end time
+prob = ODEProblem(partD!,u0,tspan)     #Create an ODE problem for the PartD function
+sol = solve(prob)                       #Solve the system
+
+cell1sol = sol # stores the solution
+
+ #repeat for cell 2
+ # Cell initial state multiplier mcell1 = 1, mcell2 = 1.25, mcell3 = 0.75
+ m = 1.25
+ u0 = [m*0.13501787727825093;m*0.2700966045978477;m*0.0006671966699509089]                       #intial conditions
+ tspan = (0.0,100)                     #start and end time
+ prob = ODEProblem(partD!,u0,tspan)     #Create an ODE problem for the PartD function
+ sol = solve(prob)                       #Solve the system
+
+ cell2sol = sol # stores the solution
+
+ #repeat for cell 3
+ # Cell initial state multiplier mcell1 = 1, mcell2 = 1.25, mcell3 = 0.75
+ m = 0.75
+ u0 = [m*0.13501787727825093;m*0.2700966045978477;m*0.0006671966699509089]                        #intial conditions
+ tspan = (0.0,100)                     #start and end time
+ prob = ODEProblem(partD!,u0,tspan)     #Create an ODE problem for the PartD function
+ sol = solve(prob)                       #Solve the system
+
+ cell3sol = sol # stores the solution
+
+# Failed attempt at plotting on the same plot. I dislike Julia.
+#Plot the results; the vars=(0,3) argument specifies to plot Z (column 1 of sol)
+#vs t (column 0 of sol)
+# Plots results as detailed above for all cells
+
+# To check lengths of the solutions so that they can be matched to the smallest legnth
+# If I really cared I'd make it check for the lowest length and change lines 67-72 to
+# automatically change so I don't have to do it manually.
+#print(length(cell1sol),length(cell2sol),length(cell3sol))
+
+# Stores just the z variables to make easier to work with variables. And attatches the ss value at the start.
+
+cell1solnew = vcat(InitialStateArray[:,2],cell1sol[3,1:length(cell2sol)])
+cell2solnew = vcat(InitialStateArray[:,2]*1.25,cell2sol[3,1:length(cell2sol)])
+#cuts off last 2 values of cell3 because it doesn't match cell1 and 2 in length.
+cell3solnew = vcat(InitialStateArray[:,2]*0.75,cell3sol[3,1:length(cell2sol)])
+time = vcat(timeExtend,cell2sol.t)
+
+plt1 = plot(time,[cell1solnew,cell2solnew,cell3solnew], xaxis="t", yaxis = "Z", label = ["cell1" "cell2" "cell3"], title = " S change from 105 to 100" )
+display(plt1)
